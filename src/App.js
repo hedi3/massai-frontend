@@ -1,89 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignUpPage';
+import Header from './components/Header';
+import ProfilePage from './pages/ProfilePage';
+import Dashboard from './pages/Dashboard';
+import OfferPage from './pages/OffersPage'; // Import the OfferPage component
+import Markets from './components/Markets'; // Import the Markets component from components folder
+import RealTimeCryptoChart from './components/RealTimeCryptoChart'; // Import the RealTimeCryptoChart component
+import NASDAQStockChart from './components/NASDAQStockChart'; // Import the NASDAQStockChart component
+import { useAuth } from './context/AuthContext';
+import 'animate.css/animate.min.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-toastify/dist/ReactToastify.css';
+import ProtectedRoute from './components/ProtectedRoute';
+import { getDarkMode, setDarkMode } from './utils/darkMode';
+import MarketNews from "./components/MarketNews";
 
-const NewsWrapper = styled.div`
-  max-width: 400px;
-  max-height: 250px;
-  overflow-y: scroll;
-  background-color: ${(props) => (props.darkMode ? '#2c3e50' : '#ffffff')};
-  border-radius: 8px;
-  box-shadow: ${(props) => (props.darkMode ? '0 4px 8px rgba(0, 0, 0, 0.3)' : '0 4px 8px rgba(0, 0, 0, 0.1)')};
-  padding: 1rem;
-`;
-
-const NewsTitle = styled.h2`
-  font-size: 1.2rem;
-  color: ${(props) => (props.darkMode ? '#ecf0f1' : '#2c3e50')};
-  margin-bottom: 0.8rem;
-`;
-
-const NewsCard = styled.div`
-  display: flex;
-  align-items: flex-start;
-  background: ${(props) => (props.darkMode ? '#34495e' : '#f9f9f9')};
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-  box-shadow: ${(props) => (props.darkMode ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)')};
-`;
-
-const NewsImage = styled.img`
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-`;
-
-const NewsContent = styled.div`
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-`;
-
-const NewsHeading = styled.h3`
-  font-size: 1rem;
-  margin: 0;
-  color: ${(props) => (props.darkMode ? '#ecf0f1' : '#2c3e50')};
-`;
-
-const NewsLink = styled.a`
-  color: ${(props) => (props.darkMode ? '#1abc9c' : '#2980b9')};
-  text-decoration: none;
-  font-size: 0.9rem;
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const MarketNews = ({ darkMode }) => {
-  const [news, setNews] = useState([]);
+const App = () => {
+  const [darkMode, setDarkModeState] = useState(getDarkMode());
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const fetchNews = async () => {
-      const response = await fetch(
-          `https://newsapi.org/v2/top-headlines?country=us&category=business&q=finance&apiKey=273152dfd73f4a8f9fda7e3b5f2abbe1`
-      );
-      const data = await response.json();
-      setNews(data.articles);
-    };
-    fetchNews();
-  }, []);
+    setDarkMode(darkMode);
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    setDarkModeState(prevMode => !prevMode);
+  };
 
   return (
-      <NewsWrapper darkMode={darkMode}>
-        <NewsTitle darkMode={darkMode}>Finance News</NewsTitle>
-        {news.map((article, index) => (
-            <NewsCard key={index} darkMode={darkMode}>
-              <NewsImage src={article.urlToImage || 'https://via.placeholder.com/60'} alt="News Thumbnail" />
-              <NewsContent>
-                <NewsHeading darkMode={darkMode}>{article.title}</NewsHeading>
-                <NewsLink href={article.url} target="_blank" rel="noopener noreferrer" darkMode={darkMode}>
-                  Read more
-                </NewsLink>
-              </NewsContent>
-            </NewsCard>
-        ))}
-      </NewsWrapper>
+    <>
+      <Header onToggleDarkMode={toggleDarkMode} darkMode={darkMode} />
+      <Routes>
+        <Route path="/" element={<HomePage darkMode={darkMode} />} />
+        <Route path="/login" element={!isAuthenticated ? <LoginPage darkMode={darkMode} /> : <Navigate to="/" />} />
+        <Route path="/signup" element={!isAuthenticated ? <SignupPage darkMode={darkMode} /> : <Navigate to="/" />} />
+        <Route path="/profile" element={<ProtectedRoute component={ProfilePage} darkMode={darkMode} />} />
+        <Route path="/dashboard" element={<ProtectedRoute component={Dashboard} darkMode={darkMode} />} />
+        <Route path="/offers" element={<OfferPage darkMode={darkMode} />} />
+        <Route path="/markets" element={<Markets darkMode={darkMode} />} />
+        <Route path="/marketNews" element={<MarketNews darkMode={darkMode} />} />
+        <Route path="/chart" element={<ProtectedRoute component={RealTimeCryptoChart} darkMode={darkMode} />} /> {/* Crypto Chart page */}
+        <Route path="/nasdaq" element={<ProtectedRoute component={NASDAQStockChart} darkMode={darkMode} />} /> {/* NASDAQ Stock Chart page */}
+        <Route path="*" element={<HomePage darkMode={darkMode} />} />
+      </Routes>
+    </>
   );
 };
 
-export default MarketNews;
+export default App;
