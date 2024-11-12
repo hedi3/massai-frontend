@@ -1,0 +1,83 @@
+[
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc."
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft Corporation"
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon.com Inc."
+    },
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet Inc."
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla Inc."
+    },
+    {
+      "symbol": "META",
+      "name": "Meta Platforms Inc."
+    },
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corporation"
+    },
+    {
+      "symbol": "ADBE",
+      "name": "Adobe Inc."
+    },
+    {
+      "symbol": "NFLX",
+      "name": "Netflix Inc."
+    },
+    {
+      "symbol": "PYPL",
+      "name": "PayPal Holdings Inc."
+    },
+    {
+      "symbol": "INTC",
+      "name": "Intel Corporation"
+    },
+    {
+      "symbol": "CSCO",
+      "name": "Cisco Systems Inc."
+    },
+    {
+      "symbol": "PEP",
+      "name": "PepsiCo Inc."
+    },
+    {
+      "symbol": "QCOM",
+      "name": "Qualcomm Inc."
+    },
+    {
+      "symbol": "AVGO",
+      "name": "Broadcom Inc."
+    },
+    {
+      "symbol": "TXN",
+      "name": "Texas Instruments Inc."
+    },
+    {
+      "symbol": "AMD",
+      "name": "Advanced Micro Devices Inc."
+    },
+    {
+      "symbol": "SBUX",
+      "name": "Starbucks Corporation"
+    },
+    {
+      "symbol": "AMAT",
+      "name": "Applied Materials Inc."
+    },
+    {
+      "symbol": "BKNG",
+      "name": "Booking Holdings Inc."
+    }
+  ]
+  

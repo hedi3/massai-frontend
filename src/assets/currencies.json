@@ -1,0 +1,7 @@
+[
+    { "code": "USD", "symbol": "$", "flag": "🇺🇸" },
+    { "code": "EUR", "symbol": "€", "flag": "🇪🇺" },
+    { "code": "JPY", "symbol": "¥", "flag": "🇯🇵" },
+    { "code": "TND", "symbol": "د.ت", "flag": "🇹🇳" }
+  ]
+  

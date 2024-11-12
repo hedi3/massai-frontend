@@ -1,0 +1,18 @@
+/* src/components/Chatbot.css */
+.rcw-widget-container {
+    font-size: 14px; /* Adjust font size */
+  }
+  
+  .rcw-conversation-container {
+    width: 300px !important; /* Adjust width */
+    height: 400px !important; /* Adjust height */
+  }
+  
+  .rcw-header {
+    background-color: #ff6347 !important; /* Change header color */
+  }
+  
+  .rcw-message-text {
+    color: #ffffff !important; /* Change message text color */
+  }
+  
