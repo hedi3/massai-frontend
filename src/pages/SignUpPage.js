@@ -105,12 +105,19 @@ const Title = styled(motion.h1)`
   color: ${({ $darkMode }) => ($darkMode ? '#e0e0e0' : '#333')};
 `;
 
+const ImagePreviewWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
 const ImagePreview = styled.img`
   width: 120px;
   height: 120px;
   object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 20px;
   border: 2px solid ${({ $darkMode }) => ($darkMode ? '#007bff' : '#0056b3')};
 `;
 
@@ -288,7 +295,6 @@ const SignUpPage = ({ darkMode }) => {
 
 
 
-      alert("Account created successfully!")
       toast.success('Account created successfully!');
       navigate('/login');
     } catch (error) {
@@ -304,7 +310,6 @@ const SignUpPage = ({ darkMode }) => {
       }
 
       toast.error(errorMessage);
-      alert(errorMessage); // Add this if you want both toast and alert
     } finally {
       setIsSubmitting(false);
     }
@@ -329,7 +334,13 @@ const SignUpPage = ({ darkMode }) => {
             <FormWrapper>
               <form onSubmit={handleSubmit} noValidate>
                 {imagePreview && (
-                    <ImagePreview src={imagePreview} alt="Profile Preview" $darkMode={darkMode} />
+                    <ImagePreviewWrapper>
+                      <ImagePreview
+                          src={imagePreview}
+                          alt="Profile Preview"
+                          $darkMode={darkMode}
+                      />
+                    </ImagePreviewWrapper>
                 )}
 
                 <Input

@@ -17,6 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import { getDarkMode, setDarkMode } from './utils/darkMode';
 import MarketNews from "./components/MarketNews";
+import {ToastContainer} from "react-toastify";
 
 const App = () => {
   const [darkMode, setDarkModeState] = useState(getDarkMode());
@@ -46,6 +47,18 @@ const App = () => {
         <Route path="/nasdaq" element={<ProtectedRoute component={NASDAQStockChart} darkMode={darkMode} />} /> {/* NASDAQ Stock Chart page */}
         <Route path="*" element={<HomePage darkMode={darkMode} />} />
       </Routes>
+      <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme={darkMode ? "dark" : "light"}
+      />
     </>
   );
 };
