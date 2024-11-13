@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollarSign, faCreditCard, faPaypal, faBank } from '@fortawesome/free-solid-svg-icons';
+import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 
+// Initialize Stripe
+const stripePromise = loadStripe('pk_test_51QKnZbDUpVnJcmUIqqbiKOYmMjnFlEJ5mCEpLyGraF05AoSm3gp5egDADNI5Df4i3bQAWp6fgGP9p1xSkhA6ayly00kxJtlfV2');
+
+// Keep your existing styled components...
 // Neumorphism effect keyframes
 const neumorphism = keyframes`
   from {
@@ -310,73 +317,174 @@ const Message = styled.div`
   margin-top: 1rem;
 `;
 
-const Deposit = ({ onClose }) => {
+// const Form = styled.form`
+//   display: flex;
+//   flex-direction: column;
+//   gap: 1.5rem;
+// `;
+
+const PaymentElementContainer = styled.div`
+  background: #f0f0f3;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2),
+              inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+`;
+
+// Inner component for the payment form
+const PaymentFormContent = ({ amount, onClose }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: 'http://localhost:3000/payment-success',
+        },
+      });
+
+      if (error) {
+        setMessage({ type: 'error', text: error.message });
+      } else {
+        setMessage({ type: 'success', text: 'Payment successful!' });
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
+    } finally {
       setIsLoading(false);
-      setMessage({ type: 'success', text: 'Deposit successful!' });
-      setTimeout(() => {
-        setMessage(null);
-        onClose();
-      }, 2000);
-    }, 2000); // Simulate a network request
+    }
   };
 
   return (
-    <ModalOverlay>
-      <ModalContent>
-        <CloseButton onClick={onClose}>
-          &times;
-        </CloseButton>
-        <Title>Deposit Money</Title>
-        <InfoSection>
-          <InfoTitle>Transaction Details</InfoTitle>
-          <InfoText>
-            Please ensure all details are correct before submitting your deposit. 
-            You will receive a confirmation once the transaction is processed.
-          </InfoText>
-        </InfoSection>
-        <Form onSubmit={handleSubmit}>
-          <Label>
-            Amount (USD):
-            <AmountWrapper>
-              <Input type="number" placeholder="Enter amount" />
-              <DollarIcon>
-                <FontAwesomeIcon icon={faDollarSign} />
-              </DollarIcon>
-            </AmountWrapper>
-          </Label>
-          <Label>
-            Payment Method:
-            <SelectWrapper>
-              <Select>
-                <Option value="creditCard" data-tooltip="Pay using your credit card.">
-                  Credit Card
-                </Option>
-                <Option value="paypal" data-tooltip="Pay using your PayPal account.">
-                  PayPal
-                </Option>
-                <Option value="bankTransfer" data-tooltip="Pay via direct bank transfer.">
-                  Bank Transfer
-                </Option>
-              </Select>
-              <Tooltip>
-                Hover over a payment method to see more info.
-              </Tooltip>
-            </SelectWrapper>
-          </Label>
-          <SubmitButton type="submit" disabled={isLoading}>
-            {isLoading ? <ProgressIndicator /> : 'Deposit'}
-          </SubmitButton>
-          {message && <Message type={message.type}>{message.text}</Message>}
-        </Form>
-      </ModalContent>
-    </ModalOverlay>
+      <Form onSubmit={handleSubmit}>
+        <PaymentElementContainer>
+          <PaymentElement />
+        </PaymentElementContainer>
+        <SubmitButton type="submit" disabled={isLoading || !stripe}>
+          {isLoading ? <ProgressIndicator /> : 'Pay Now'}
+        </SubmitButton>
+        {message && <Message type={message.type}>{message.text}</Message>}
+      </Form>
+  );
+};
+
+const Deposit = ({ onClose }) => {
+  const [amount, setAmount] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+  const [error, setError] = useState('');
+  const [step, setStep] = useState('amount'); // 'amount' or 'payment'
+
+  const handleAmountSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!amount || amount <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8083/api/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: Math.round(amount * 100), // Convert to cents
+          currency: 'usd'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      const data = await response.json();
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret);
+        setStep('payment');
+      } else {
+        throw new Error('No client secret received');
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+      <ModalOverlay>
+        <ModalContent>
+          <CloseButton onClick={onClose}>&times;</CloseButton>
+          <Title>Deposit Money</Title>
+
+          {step === 'amount' ? (
+              <Form onSubmit={handleAmountSubmit}>
+                <InfoSection>
+                  <InfoTitle>Enter Deposit Amount</InfoTitle>
+                  <InfoText>
+                    Please enter the amount you wish to deposit. You will be redirected to our secure payment processor.
+                  </InfoText>
+                </InfoSection>
+
+                <Label>
+                  Amount (USD):
+                  <AmountWrapper>
+                    <Input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="Enter amount"
+                        min="0.01"
+                        step="0.01"
+                    />
+                    <DollarIcon>
+                      <FontAwesomeIcon icon={faDollarSign} />
+                    </DollarIcon>
+                  </AmountWrapper>
+                </Label>
+
+                <SubmitButton type="submit">
+                  Continue to Payment
+                </SubmitButton>
+
+                {error && <Message type="error">{error}</Message>}
+              </Form>
+          ) : (
+              clientSecret && (
+                  <Elements
+                      stripe={stripePromise}
+                      options={{
+                        clientSecret,
+                        appearance: {
+                          theme: 'stripe',
+                          variables: {
+                            colorPrimary: '#333',
+                            colorBackground: '#f0f0f3',
+                            colorText: '#333',
+                          },
+                        },
+                      }}
+                  >
+                    <PaymentFormContent amount={amount} onClose={onClose} />
+                  </Elements>
+              )
+          )}
+        </ModalContent>
+      </ModalOverlay>
   );
 };
 
