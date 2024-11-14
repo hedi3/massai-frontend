@@ -1,0 +1,15 @@
+download stripe cli
+
+
+C:\Users\medaz>stripe listen --forward-to localhost:8083/api/webhook
+> Ready! You are using Stripe API Version [2024-10-28.acacia]. Your webhook signing secret is whsec_05e8e2ec8635feec0a056120ee45409eb76036d24aa769a31abd772092698de1 (^C to quit)
+2024-11-13 23:38:28   --> payment_intent.succeeded [evt_3QKotZDUpVnJcmUI13D36v3z]
+2024-11-13 23:38:28   --> charge.succeeded [evt_3QKotZDUpVnJcm
+
+
+nbadlou l whec fel backend
+
+
+
+
+S C:\Users\medaz> stripe trigger payment_intent.succeeded ?????
