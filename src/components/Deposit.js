@@ -5,6 +5,7 @@ import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
+import {useAuth} from "../context/AuthContext";
 
 // Initialize Stripe
 const stripePromise = loadStripe('pk_test_51QKnZbDUpVnJcmUIqqbiKOYmMjnFlEJ5mCEpLyGraF05AoSm3gp5egDADNI5Df4i3bQAWp6fgGP9p1xSkhA6ayly00kxJtlfV2');
@@ -337,6 +338,7 @@ const PaymentFormContent = ({ amount, onClose }) => {
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const { user } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -352,6 +354,11 @@ const PaymentFormContent = ({ amount, onClose }) => {
         elements,
         confirmParams: {
           return_url: 'http://localhost:3000/payment-success',
+          payment_method_data: {
+            billing_details: {
+              name: user.username
+            }
+          }
         },
       });
 
@@ -387,7 +394,8 @@ const Deposit = ({ onClose }) => {
   const [amount, setAmount] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [error, setError] = useState('');
-  const [step, setStep] = useState('amount'); // 'amount' or 'payment'
+  const [step, setStep] = useState('amount');
+  const { user } = useAuth();
 
   const handleAmountSubmit = async (e) => {
     e.preventDefault();
@@ -405,7 +413,12 @@ const Deposit = ({ onClose }) => {
         },
         body: JSON.stringify({
           amount: Math.round(amount * 100), // Convert to cents
-          currency: 'usd'
+          currency: 'usd',
+          metadata: {
+            amount: amount.toString(),
+            type: 'deposit',
+            user: user.username
+          }
         }),
       });
 
