@@ -354,6 +354,7 @@ const Header = ({ onToggleDarkMode, darkMode }) => {
               </IconButton>
               <DropdownMenu darkMode={darkMode} show={showDropdown}>
                 <DropdownItem to="/profile" darkMode={darkMode}>Profile</DropdownItem>
+                <DropdownItem to="/transactions" darkMode={darkMode}>Transactions</DropdownItem>
                 <DropdownItem to="/settings" darkMode={darkMode}>Settings</DropdownItem>
                 <DropdownItem to="/dashboard" darkMode={darkMode}>Dashboard</DropdownItem>
                 <DropdownItem onClick={handleLogout} darkMode={darkMode}>Logout</DropdownItem>
