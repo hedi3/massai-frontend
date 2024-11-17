@@ -166,12 +166,126 @@ const RefreshButton = styled.button`
   }
 `;
 
+const WithdrawalSection = styled.div`
+  background: #f0f0f3;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2),
+              -4px -4px 8px rgba(255, 255, 255, 0.9);
+  margin-top: 1rem;
+`;
+
+const WithdrawalForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.75rem;
+  padding-left: 2rem;
+  border: none;
+  border-radius: 8px;
+  background: #f0f0f3;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2),
+              inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  color: #333;
+
+  &:focus {
+    outline: none;
+    box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.2),
+                inset -3px -3px 7px rgba(255, 255, 255, 0.9);
+  }
+`;
+
+const DollarIcon = styled(FontAwesomeIcon)`
+  position: absolute;
+  left: 0.75rem;
+  color: #666;
+`;
+
+const WithdrawButton = styled.button`
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  
+  &:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+  }
+  
+  &:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
 const Wallet = ({ onClose }) => {
   const [walletData, setWalletData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
+  const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  const [withdrawalError, setWithdrawalError] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  const handleWithdrawal = async (e) => {
+    e.preventDefault();
+    setWithdrawalError('');
+    setProcessing(true);
+
+    try {
+      const amount = parseFloat(withdrawalAmount);
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error('Please enter a valid amount');
+      }
+
+      if (amount > walletData.totalBalance) {
+        throw new Error('Insufficient funds');
+      }
+
+      const response = await fetch(`http://localhost:8083/api/transactions/withdraw`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: user.username,
+          amount: amount,
+          type: 'WITHDRAWAL'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Withdrawal failed. Please try again.');
+      }
+
+      // Refresh wallet data and transactions
+      await fetchWalletData();
+      setWithdrawalAmount('');
+      setWithdrawalError('');
+    } catch (err) {
+      setWithdrawalError(err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const fetchWalletData = async () => {
     try {
@@ -296,6 +410,35 @@ const Wallet = ({ onClose }) => {
                 ))
             )}
           </TransactionsList>
+
+          <WithdrawalSection>
+            <WalletTitle>Make a Withdrawal</WalletTitle>
+            <WithdrawalForm onSubmit={handleWithdrawal}>
+              <InputWrapper>
+                <DollarIcon icon={faDollarSign} />
+                <Input
+                    type="number"
+                    step="0.01"
+                    value={withdrawalAmount}
+                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    disabled={processing}
+                />
+              </InputWrapper>
+              {withdrawalError && (
+                  <ErrorMessage>
+                    <FontAwesomeIcon icon={faExclamationCircle} />
+                    {withdrawalError}
+                  </ErrorMessage>
+              )}
+              <WithdrawButton
+                  type="submit"
+                  disabled={processing || !withdrawalAmount || parseFloat(withdrawalAmount) <= 0 || parseFloat(withdrawalAmount) > walletData?.totalBalance}
+              >
+                {processing ? 'Processing...' : 'Withdraw'}
+              </WithdrawButton>
+            </WithdrawalForm>
+          </WithdrawalSection>
 
           <RefreshButton onClick={handleRefresh}>
             <FontAwesomeIcon icon={faSync} />
