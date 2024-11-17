@@ -353,7 +353,7 @@ const PaymentFormContent = ({ amount, onClose }) => {
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: 'http://localhost:3000/payment-success',
+          return_url: 'http://localhost:4200/transactions',
           payment_method_data: {
             billing_details: {
               name: user.username
