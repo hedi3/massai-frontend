@@ -5,6 +5,8 @@ import { Spin, Button, Modal, Select, Tooltip, Dropdown, Menu } from 'antd';
 import styled, { keyframes } from 'styled-components';
 import { FaArrowUp, FaArrowDown, FaClock, FaTimes, FaToolbox, FaCar, FaChartArea, FaLine, FaCogs, FaGlobe } from 'react-icons/fa';
 import { RiAppleFill, RiMicrosoftFill, RiAmazonFill, RiGoogleFill } from 'react-icons/ri';
+import { toast } from 'react-toastify';
+import {useAuth} from "../context/AuthContext";
 
 const { Option } = Select;
 
@@ -162,6 +164,52 @@ const AdvancedToolsMenu = styled(Menu)`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
+const TradingButtons = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: center;
+`;
+
+const TradeButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const BuyButton = styled(TradeButton)`
+  background-color: #28a745;
+  color: white;
+  
+  &:hover {
+    background-color: #218838;
+  }
+`;
+
+const SellButton = styled(TradeButton)`
+  background-color: #dc3545;
+  color: white;
+  
+  &:hover {
+    background-color: #c82333;
+  }
+`;
+
+const OrderModal = styled(Modal)`
+  .modal-content {
+    padding: 20px;
+    border-radius: 10px;
+  }
+`;
+
 // Utility function to calculate Simple Moving Average (SMA)
 const calculateSMA = (data, windowSize) => {
   let sma = [];
@@ -213,11 +261,59 @@ const NASDAQStockChart = () => {
   const [settlementPrice, setSettlementPrice] = useState(null);
   const [sigma, setSigma] = useState(null);
 
+  const [isOrderModalVisible, setIsOrderModalVisible] = useState(false);
+  const [orderType, setOrderType] = useState(null);
+  const [orderAmount, setOrderAmount] = useState('');
+
+  const { user } = useAuth();
+
   const showIntervalModal = () => setIsIntervalModalVisible(true);
   const hideIntervalModal = () => setIsIntervalModalVisible(false);
 
   const showStockModal = () => setIsStockModalVisible(true);
   const hideStockModal = () => setIsStockModalVisible(false);
+
+  const showOrderModal = (type) => {
+    setOrderType(type);
+    setIsOrderModalVisible(true);
+  };
+
+  const hideOrderModal = () => {
+    setIsOrderModalVisible(false);
+    setOrderAmount('');
+  };
+
+  const placeOrder = async () => {
+    try {
+      // Assuming you have the user ID stored in your app state or localStorage
+      const userId = localStorage.getItem('userId');
+      console.log("orderType  " , orderType)
+      const response = await fetch('http://localhost:8083/api/v1/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Username': user.username, // Pass the username in the headers
+        },
+        body: JSON.stringify({
+          symbol: selectedStock,
+          orderType: orderType,
+          lotsSize: parseFloat(orderAmount),
+          price: currentPrice,
+        }),
+      });
+
+
+      if (!response.ok) {
+        throw new Error('Failed to place order');
+      }
+
+      const data = await response.json();
+      toast.success(`${orderType} order placed successfully!`);
+      hideOrderModal();
+    } catch (error) {
+      toast.error(error.message || 'Failed to place order');
+    }
+  };
 
   const fetchCurrentPrice = useCallback(async (symbol) => {
     setLoading(true);
@@ -772,6 +868,46 @@ const NASDAQStockChart = () => {
               </Option>
           ))}
         </Select>
+
+        <TradingButtons>
+          <BuyButton onClick={() => showOrderModal('BUY')}>
+            Buy {stocks.find((stock) => stock.symbol === selectedStock)?.name}
+          </BuyButton>
+          <SellButton onClick={() => showOrderModal('SELL')}>
+            Sell {stocks.find((stock) => stock.symbol === selectedStock)?.name}
+          </SellButton>
+        </TradingButtons>
+
+
+        <OrderModal
+            title={`Place ${orderType} Order`}
+            open={isOrderModalVisible}
+            onCancel={hideOrderModal}
+            onOk={placeOrder}
+            okText="Confirm Order"
+            cancelText="Cancel"
+        >
+          <div style={{ marginTop: '20px' }}>
+            <label>Lots:</label>
+            <input
+                type="number"
+                value={orderAmount}
+                onChange={(e) => setOrderAmount(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  marginTop: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd'
+                }}
+                placeholder="Enter lots size"
+            />
+            <p style={{ marginTop: '10px' }}>
+              Current Price: {currentPrice}
+            </p>
+          </div>
+        </OrderModal>
+
       </MainContainer>
   );
 };
