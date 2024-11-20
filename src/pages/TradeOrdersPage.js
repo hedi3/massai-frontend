@@ -2,7 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Table, Spin, Button } from 'antd';
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
-import styled from 'styled-components';
+import styled, {keyframes} from 'styled-components';
+
+const fadeIn = keyframes`
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+`;
+
+const MainContainer = styled.div`
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    margin-top: 70px;
+    flex-direction: column;
+    padding: 2rem;
+    background: linear-gradient(135deg, #e1f5fe 0%, #ffebee 100%);
+    animation: ${fadeIn} 1s ease-in-out;
+`;
+
+const Card = styled.div`
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1200px;
+    overflow: hidden;
+`;
+
 
 const TradeOrdersPage = () => {
     const [tradeOrders, setTradeOrders] = useState([]);
@@ -167,6 +194,8 @@ const TradeOrdersPage = () => {
     ];
 
     return (
+        <MainContainer>
+            <Card>
         <div style={{ padding: '20px' }}>
             <h1>All Trade Orders</h1>
             {isLoading ? (
@@ -183,6 +212,8 @@ const TradeOrdersPage = () => {
                 />
             )}
         </div>
+            </Card>
+        </MainContainer>
     );
 };
 
