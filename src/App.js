@@ -19,6 +19,7 @@ import { getDarkMode, setDarkMode } from './utils/darkMode';
 import MarketNews from "./components/MarketNews";
 import {ToastContainer} from "react-toastify";
 import TransactionsPage from "./pages/TransactionsPage";
+import TradeOrdersPage from "./pages/TradeOrdersPage";
 
 const App = () => {
   const [darkMode, setDarkModeState] = useState(getDarkMode());
@@ -42,6 +43,7 @@ const App = () => {
         <Route path="/profile" element={<ProtectedRoute component={ProfilePage} darkMode={darkMode} />} />
         <Route path="/dashboard" element={<ProtectedRoute component={Dashboard} darkMode={darkMode} />} />
         <Route path="/transactions" element={<ProtectedRoute component={TransactionsPage} darkMode={darkMode} />} />
+        <Route path="/orders" element={<ProtectedRoute component={TradeOrdersPage} darkMode={darkMode} />} />
         <Route path="/offers" element={<OfferPage darkMode={darkMode} />} />
         <Route path="/markets" element={<Markets darkMode={darkMode} />} />
         <Route path="/marketNews" element={<MarketNews darkMode={darkMode} />} />
