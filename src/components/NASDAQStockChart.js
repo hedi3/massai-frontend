@@ -43,6 +43,135 @@ const fadeIn = keyframes`
   }
 `;
 
+// const fadeIn = keyframes`
+//     from { opacity: 0; transform: translateY(-10px); }
+//     to { opacity: 1; transform: translateY(0); }
+// `;
+
+const Card = styled.div`
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1200px;
+    overflow: hidden;
+`;
+
+const CardHeader = styled.div`
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+`;
+
+const Title = styled.h1`
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+`;
+
+const Subtitle = styled.p`
+    color: #666;
+    margin: 0.5rem 0 0 0;
+`;
+
+const TableContainer = styled.div`
+    overflow-x: auto;
+`;
+
+const Table = styled.table`
+    width: 100%;
+    border-collapse: collapse;
+`;
+
+const TableHeader = styled.th`
+    padding: 1rem;
+    text-align: ${props => props.align || 'left'};
+    background: #f8f9fa;
+    cursor: pointer;
+    user-select: none;
+    color: #555;
+    font-weight: 600;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background: #edf2f7;
+    }
+`;
+
+const TableRow = styled.tr`
+    border-bottom: 1px solid #eee;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: #f8f9fa;
+    }
+`;
+
+const TableCell = styled.td`
+    padding: 1rem;
+    text-align: ${props => props.align || 'left'};
+    color: #333;
+`;
+
+const StatusBadge = styled.span`
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    background: ${props => {
+  switch (props.status) {
+    case 'COMPLETED': return '#10B981';
+    case 'PENDING': return '#F59E0B';
+    case 'FAILED': return '#EF4444';
+    case 'CANCELLED': return '#6B7280';
+    default: return '#6B7280';
+  }
+}};
+`;
+
+const HeaderCell = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: ${props => props.align === 'right' ? 'flex-end' : 'flex-start'};
+`;
+
+const ActionButton = styled.button`
+    background-color: #3B82F6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: #2563EB;
+    }
+
+    &:disabled {
+        background-color: #9CA3AF;
+        cursor: not-allowed;
+    }
+`;
+
+// const MainContainer = styled.div`
+//     min-height: 100vh;
+//     width: 100%;
+//     display: flex;
+//     margin-top: 70px;
+//     flex-direction: column;
+//     padding: 2rem;
+//     background: linear-gradient(135deg, #e1f5fe 0%, #ffebee 100%);
+//     animation: ${fadeIn} 1s ease-in-out;
+// `;
+
+
 const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -265,7 +394,96 @@ const NASDAQStockChart = () => {
   const [orderType, setOrderType] = useState(null);
   const [orderAmount, setOrderAmount] = useState('');
 
+  const [tradeOrders, setTradeOrders] = useState([]);
+  const [isTradeOrdersLoading, setIsTradeOrdersLoading] = useState(false);
+  const [sortColumn, setSortColumn] = useState('type');
+  const [sortDirection, setSortDirection] = useState('asc');
   const { user } = useAuth();
+
+  const fetchTradeOrders = async () => {
+    if (!user) return;
+
+    setIsTradeOrdersLoading(true);
+    try {
+      const response = await fetch(
+          `http://localhost:8083/api/v1/orders/user/${user.username}/symbol/${selectedStock}?currentPrice=${currentPrice}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch trade orders');
+      }
+
+      const data = await response.json();
+      setTradeOrders(data);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsTradeOrdersLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    if (user && currentPrice) {
+      fetchTradeOrders();
+    }
+  }, [user,currentPrice]); // This will run once when user becomes available
+
+  const formatAmount = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const closeTradeOrder = async (orderId) => {
+    try {
+      const response = await fetch(
+          `http://localhost:8083/api/v1/orders/${orderId}/close?currentPrice=${currentPrice}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to close trade order');
+      }
+
+      const updatedOrder = await response.json();
+      toast.success('Trade order closed successfully');
+      fetchTradeOrders(); // Refresh the trade orders list
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+
+    // Implement sorting logic here if needed
+  };
+
+  const getSortIcon = (column) => {
+    if (sortColumn !== column) return '↕';
+    return sortDirection === 'asc' ? '↑' : '↓';
+  };
+
 
   const showIntervalModal = () => setIsIntervalModalVisible(true);
   const hideIntervalModal = () => setIsIntervalModalVisible(false);
@@ -310,6 +528,7 @@ const NASDAQStockChart = () => {
       const data = await response.json();
       toast.success(`${orderType} order placed successfully!`);
       hideOrderModal();
+      fetchTradeOrders(); // This line refreshes the orders table
     } catch (error) {
       toast.error(error.message || 'Failed to place order');
     }
@@ -879,6 +1098,75 @@ const NASDAQStockChart = () => {
         </TradingButtons>
 
 
+        <TableContainer>
+          <Table>
+            <thead>
+            <tr>
+              <TableHeader onClick={() => handleSort('type')}>
+                <HeaderCell>
+                  Type
+                  <span>{getSortIcon('type')}</span>
+                </HeaderCell>
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('lotsSize')}>
+                <HeaderCell>
+                  Lots Size
+                  <span>{getSortIcon('lotsSize')}</span>
+                </HeaderCell>
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('originalPrice')}>
+                <HeaderCell>
+                  Original Price
+                  <span>{getSortIcon('originalPrice')}</span>
+                </HeaderCell>
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('currentPrice')}>
+                <HeaderCell>
+                  Current Price
+                  <span>{getSortIcon('currentPrice')}</span>
+                </HeaderCell>
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('performanceStatus')}>
+                <HeaderCell>
+                  Performance Status
+                  <span>{getSortIcon('performanceStatus')}</span>
+                </HeaderCell>
+              </TableHeader>
+              <TableHeader onClick={() => handleSort('performanceValue')}>
+                <HeaderCell>
+                  Performance Value
+                  <span>{getSortIcon('performanceValue')}</span>
+                </HeaderCell>
+              </TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </tr>
+            </thead>
+            <tbody>
+            {tradeOrders.map(order => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.type}</TableCell>
+                  <TableCell>{order.lotsSize}</TableCell>
+                  <TableCell>{formatAmount(order.originalPrice)}</TableCell>
+                  <TableCell>{formatAmount(order.currentPrice)}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={order.performanceStatus}>
+                      {order.performanceStatus}
+                    </StatusBadge>
+                  </TableCell>
+                  <TableCell>{formatAmount(order.performanceValue)}</TableCell>
+                  <TableCell>
+                    <ActionButton
+                        onClick={() => closeTradeOrder(order.id)}
+                        disabled={order.status === 'COMPLETED'}
+                    >
+                      Close Order
+                    </ActionButton>
+                  </TableCell>
+                </TableRow>
+            ))}
+            </tbody>
+          </Table>
+        </TableContainer>
         <OrderModal
             title={`Place ${orderType} Order`}
             open={isOrderModalVisible}
