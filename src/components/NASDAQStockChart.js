@@ -1128,13 +1128,13 @@ const NASDAQStockChart = () => {
               </TableHeader>
               <TableHeader onClick={() => handleSort('performanceStatus')}>
                 <HeaderCell>
-                  Performance Status
+                  Status
                   <span>{getSortIcon('performanceStatus')}</span>
                 </HeaderCell>
               </TableHeader>
               <TableHeader onClick={() => handleSort('performanceValue')}>
                 <HeaderCell>
-                  Performance Value
+                 Value
                   <span>{getSortIcon('performanceValue')}</span>
                 </HeaderCell>
               </TableHeader>

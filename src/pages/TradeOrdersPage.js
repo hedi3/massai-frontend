@@ -3,6 +3,16 @@ import { Table, Spin, Button } from 'antd';
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
 import styled, {keyframes} from 'styled-components';
+import {useNavigate} from "react-router-dom";
+
+// Symbol to Name Mapping
+const SYMBOL_NAME_MAP = {
+    '^IXIC': 'nasdaq',
+    // You can add more mappings here
+    // Example:
+    // '^GSPTSE': 'toronto',
+    // '^DJI': 'dow-jones'
+};
 
 const fadeIn = keyframes`
     from { opacity: 0; transform: translateY(-10px); }
@@ -35,6 +45,8 @@ const TradeOrdersPage = () => {
     const [tradeOrders, setTradeOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useAuth();
+    const navigate = useNavigate();
+
 
     const fetchAllTradeOrders = async () => {
         if (!user) return;
@@ -163,31 +175,38 @@ const TradeOrdersPage = () => {
         {
             title: 'Current Price',
             key: 'currentPrice',
-            render: (record) => formatAmount(record.currentPrice),
+            render: (record) =>
+                record.status === 'ACTIVE' ? '------' : formatAmount(record.currentPrice),
         },
         {
-            title: 'Performance Status',
+            title: 'Status',
             key: 'performanceStatus',
-            render: (record) => (
-                <StatusBadge status={record.performanceStatus}>
-                    {record.performanceStatus}
-                </StatusBadge>
-            ),
+            render: (record) =>
+                record.status === 'ACTIVE' ? '------' : (
+                    <StatusBadge status={record.performanceStatus}>
+                        {record.performanceStatus}
+                    </StatusBadge>
+                ),
         },
         {
-            title: 'Performance Value',
+            title: 'Value',
             key: 'performanceValue',
-            render: (record) => formatAmount(record.performanceValue),
+            render: (record) =>
+                record.status === 'ACTIVE' ? '------' : formatAmount(record.performanceValue),
         },
         {
             title: 'Actions',
             key: 'actions',
             render: (record) => (
                 <ActionButton
-                    onClick={() => closeTradeOrder(record.id)}
+                    onClick={() => {
+                        // Get the name based on the symbol, default to symbol if not found
+                        const name = SYMBOL_NAME_MAP[record.symbol] || record.symbol;
+                        navigate(`/${name}`); // Navigate to the corresponding page
+                    }}
                     disabled={record.status === 'COMPLETED'}
                 >
-                    Close Order
+                    View Details
                 </ActionButton>
             ),
         },
